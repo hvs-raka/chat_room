@@ -5,32 +5,68 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <title>Retro Chat Room</title>
     <link rel="stylesheet" href="styles.css" />
-    <link
-      rel="stylesheet"
-      href="https://fonts.googleapis.com/css2?family=Press+Start+2P&display=swap"
-    />
   </head>
   <body>
     <div class="container">
       <h1>CJu Chat</h1>
-      <!-- Added CJu Chat name here -->
       <div class="chat-box">
         <div class="chat-messages">
-          <div class="message">
-            <span class="username">User1:</span>
-            <span class="text">Hey, what's up?</span>
-          </div>
-          <div class="message">
-            <span class="username">User2:</span>
-            <span class="text">Not much, just chilling. How about you?</span>
-          </div>
-          <!-- More messages go here -->
+          <!-- Chat messages will be displayed here -->
         </div>
         <div class="input-box">
-          <input type="text" placeholder="Type your message..." />
-          <button>Send</button>
+          <input
+            id="messageInput"
+            type="text"
+            placeholder="Type your message..."
+          />
+          <button id="sendButton">Send</button>
         </div>
       </div>
     </div>
+
+    <script src="/socket.io/socket.io.js"></script>
+    <script>
+      const socket = io();
+
+      // Function to send a chat message
+      function sendMessage() {
+        const messageInput = document.getElementById("messageInput");
+        const message = messageInput.value.trim();
+        if (message !== "") {
+          socket.emit("chatMessage", message);
+          messageInput.value = "";
+        }
+      }
+
+      // Event listener for the send button
+      document
+        .getElementById("sendButton")
+        .addEventListener("click", sendMessage);
+
+      // Event listener for pressing enter in the input field
+      document
+        .getElementById("messageInput")
+        .addEventListener("keydown", (event) => {
+          if (event.key === "Enter") {
+            sendMessage();
+          }
+        });
+
+      // Function to add a message to the chat box
+      function addMessage(message) {
+        const chatMessages = document.querySelector(".chat-messages");
+        const messageElement = document.createElement("div");
+        messageElement.classList.add("message");
+        messageElement.innerHTML = `<span class="text">${message}</span>`;
+        chatMessages.appendChild(messageElement);
+        // Scroll to the bottom of the chat box
+        chatMessages.scrollTop = chatMessages.scrollHeight;
+      }
+
+      // Receive and display incoming chat messages
+      socket.on("chatMessage", (message) => {
+        addMessage(message);
+      });
+    </script>
   </body>
 </html>
