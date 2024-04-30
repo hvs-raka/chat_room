@@ -3,12 +3,13 @@
   <head>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>Retro Chat Room</title>
+    <title>CJu Chat Paaji</title>
     <link rel="stylesheet" href="styles.css" />
   </head>
   <body>
     <div class="container">
       <h1>CJu Chat</h1>
+      <h3>Your opinions are safe here.</h3>
       <div class="chat-box">
         <div class="chat-messages">
           <!-- Chat messages will be displayed here -->
@@ -17,7 +18,7 @@
           <input
             id="messageInput"
             type="text"
-            placeholder="Type your message..."
+            placeholder="Hanji Write your message here..."
           />
           <button id="sendButton">Send</button>
         </div>
@@ -28,15 +29,50 @@
     <script>
       const socket = io();
 
+      // Prompt the user to enter their username
+      let username = prompt("Please enter your username:");
+      if (!username) {
+        username = "Anonymous"; // Default to "Anonymous" if no username is provided
+      }
+
+      // Generate a random ID for the user
+      const userId = Math.random().toString(36).substring(7);
+
+      // Emit a message to the server with user information
+      socket.emit("newUser", { userId, username });
+
+      // Receive and display chat history
+      socket.on("chatHistory", (history) => {
+        history.forEach((message) => {
+          addMessage(message);
+        });
+      });
+
       // Function to send a chat message
       function sendMessage() {
         const messageInput = document.getElementById("messageInput");
         const message = messageInput.value.trim();
         if (message !== "") {
-          socket.emit("chatMessage", message);
+          socket.emit("chatMessage", { userId, username, message });
           messageInput.value = "";
         }
       }
+
+      // Function to add a message to the chat box
+      function addMessage(message) {
+        const chatMessages = document.querySelector(".chat-messages");
+        const messageElement = document.createElement("div");
+        messageElement.classList.add("message");
+        messageElement.innerHTML = `<span class="username">${message.username} (${message.userId}):</span> <span class="text">${message.message}</span>`;
+        chatMessages.appendChild(messageElement);
+        // Scroll to the bottom of the chat box
+        chatMessages.scrollTop = chatMessages.scrollHeight;
+      }
+
+      // Receive and display incoming chat messages
+      socket.on("chatMessage", (message) => {
+        addMessage(message);
+      });
 
       // Event listener for the send button
       document
@@ -51,22 +87,6 @@
             sendMessage();
           }
         });
-
-      // Function to add a message to the chat box
-      function addMessage(message) {
-        const chatMessages = document.querySelector(".chat-messages");
-        const messageElement = document.createElement("div");
-        messageElement.classList.add("message");
-        messageElement.innerHTML = `<span class="text">${message}</span>`;
-        chatMessages.appendChild(messageElement);
-        // Scroll to the bottom of the chat box
-        chatMessages.scrollTop = chatMessages.scrollHeight;
-      }
-
-      // Receive and display incoming chat messages
-      socket.on("chatMessage", (message) => {
-        addMessage(message);
-      });
     </script>
   </body>
 </html>
